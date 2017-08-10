@@ -391,12 +391,12 @@ module.exports = router => {
             const claim_no = req.body.claimno
             const totaldamagevalue = req.body.totaldamagevalue;
             const totalclaimvalue = req.body.totalclaimvalue;
-            const publicadjusterid = req.body.publicadjusterid;
+           
 
 
 
 
-            if (!claim_no || !totaldamagevalue || !totalclaimvalue || !publicadjusterid || !claim_no.trim() || !totaldamagevalue.trim() || !totalclaimvalue.trim() || !publicadjusterid.trim()) {
+            if (!claim_no || !totaldamagevalue || !totalclaimvalue  || !claim_no.trim() || !totaldamagevalue.trim() || !totalclaimvalue.trim() ) {
                 //the if statement checks if any of the above paramenters are null or not..if is the it sends an error report.
                 res.status(400).json({
                     message: 'Invalid Request !'
@@ -405,7 +405,7 @@ module.exports = router => {
             } else {
 
 
-                createClaim.createClaim(claim_no, totaldamagevalue, totalclaimvalue, publicadjusterid)
+                createClaim.createClaim(claim_no, totaldamagevalue, totalclaimvalue)
                     .then(result => {
 
 
