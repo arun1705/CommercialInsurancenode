@@ -29,6 +29,7 @@ const examineClaim = require('./functions/examineClaim');
 const negotiateClaim = require('./functions/negotiateClaim');
 const approveClaim = require('./functions/approveClaim');
 const settleClaim = require('./functions/settleClaim');
+const publicAdjusterList = require('./functions/publicAdjusterList');
 const date = require('date-and-time');
 
 const fetchClaimlist = require('./functions/fetchClaimlist');
