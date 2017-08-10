@@ -137,7 +137,7 @@ function createClaim(params) {
             }
             var reqSpec = getRequestSpec({
                 functionName: "createClaim",
-                args: [ClaimDetails.claim_no, ClaimDetails.totaldamagevalue, ClaimDetails.totalclaimvalue , ClaimDetails.publicadjusterid]
+                args: [ClaimDetails.claim_no, ClaimDetails.totaldamagevalue, ClaimDetails.totalclaimvalue, ClaimDetails.publicadjusterid]
             });
             recursiveInvoke({
                     requestSpec: reqSpec,
