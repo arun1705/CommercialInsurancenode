@@ -1141,6 +1141,42 @@ module.exports = router => {
     });
 
 
+    router.get('/publicadjusterlist', cors(), (req, res) => {
+        const userid = getUserId(req)
+        console.log(userid);
+
+
+
+        if (!userid || !userid.trim()) {
+            //the if statement checks if any of the above paramenters are null or not..if is the it sends an error report.
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        } else {
+
+
+            publicAdjusterList.publicAdjusterList(userid)
+
+            .then(function(result) {
+                console.log(result)
+                res.status(result.status).json({
+                    status: result.status,
+                    message: result.usr
+                })
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+        }
+
+    });
+    
+    
+    
+    
+    
     function getUserId(req) {
 
         const token = req.headers['x-access-token'];
