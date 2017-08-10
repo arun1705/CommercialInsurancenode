@@ -6,15 +6,15 @@ var bcSdk = require('../src/blockchain/blockchain_sdk');
 var user = 'risabh.s';
 var affiliation = 'fundraiser';
 //exports is used here so that registerUser can be exposed for router and blockchainSdk file
-exports.createClaim = (claim_no, totaldamagevalue, totalclaimvalue, publicadjusterid) =>
+exports.createClaim = (claim_no, totaldamagevalue, totalclaimvalue) =>
     new Promise((resolve, reject) => {
 
 
         const claim_details = ({
             claim_no: claim_no,
             totaldamagevalue: totaldamagevalue,
-            totalclaimvalue: totalclaimvalue,
-            publicadjusterid: publicadjusterid
+            totalclaimvalue: totalclaimvalue
+            
         });
 
         console.log("ENTERING THE createClaim from createClaim.js to blockchainSdk");
