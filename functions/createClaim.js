@@ -15,7 +15,6 @@ exports.createClaim = (claim_no, totaldamagevalue, totalclaimvalue, publicadjust
             totaldamagevalue: totaldamagevalue,
             totalclaimvalue: totalclaimvalue,
             publicadjusterid: publicadjusterid
-            
         });
 
         console.log("ENTERING THE createClaim from createClaim.js to blockchainSdk");
