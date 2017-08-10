@@ -36,7 +36,7 @@ const fetchClaimlist = require('./functions/fetchClaimlist');
 
 module.exports = router => {
 
-    router.get('/', (req, res) => res.send('Welcome to commercialinsurance,please hit a service !'));
+    router.get('/', (req, res) => res.send("Welcome to p2plending,please hit a service !"));
     router.post('/registerUser', cors(), (req, res) => {
         console.log("entering register function in functions");
         const firstname = req.body.firstname;
@@ -391,8 +391,7 @@ module.exports = router => {
             const claim_no = req.body.claimno
             const totaldamagevalue = req.body.totaldamagevalue;
             const totalclaimvalue = req.body.totalclaimvalue;
-             const publicadjusterid = req.body.publicadjusterid;
-           
+            const publicadjusterid = req.body.publicadjusterid;
 
 
 
@@ -406,7 +405,7 @@ module.exports = router => {
             } else {
 
 
-                 createClaim.createClaim(claim_no, totaldamagevalue, totalclaimvalue, publicadjusterid)
+                createClaim.createClaim(claim_no, totaldamagevalue, totalclaimvalue, publicadjusterid)
                     .then(result => {
 
 
