@@ -1090,7 +1090,7 @@ module.exports = router => {
 
 
     router.post('/UploadDocs', upload.any(), function(req, res, next) {
-        const id = getUserId(req.query.token)
+        const id = getUser(req)
         res.send({
             "files": req.files,
             message: "files uploaded succesfully"
@@ -1198,7 +1198,27 @@ module.exports = router => {
         }
     }
 
+function getUser(req) {
 
+        const token = req.query.token;
+
+        if (token) {
+
+            try {
+
+                var decoded = jwt.verify(token, config.secret);
+                return decoded.users._id
+
+            } catch (err) {
+
+                return false;
+            }
+
+        } else {
+
+            return failed;
+        }
+    }
 
 
     function checkToken(req) {
