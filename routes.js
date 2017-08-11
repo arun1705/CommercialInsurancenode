@@ -1142,7 +1142,7 @@ module.exports = router => {
     });
 
 
-    router.get('/publicadjusterlist', cors(), (req, res) => {
+     router.get('/publicadjusterlist', cors(), (req, res) => {
         const userid = getUserId(req)
         console.log(userid);
 
@@ -1173,9 +1173,7 @@ module.exports = router => {
         }
 
     });
-    
-    
-    
+
     
     
     function getUserId(req) {
