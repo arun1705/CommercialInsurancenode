@@ -1090,7 +1090,7 @@ module.exports = router => {
 
 
     router.post('/UploadDocs', upload.any(), function(req, res, next) {
-        const id = getUserId(req)
+        //const id = getUserId(req)
         res.send({
             "files": req.files,
             message: "files uploaded succesfully"
@@ -1103,7 +1103,7 @@ module.exports = router => {
         var imagepath = {};
         imagepath['path'] = path;
         imagepath['originalname'] = imageName;
-        imagepath['userid'] = id
+        //imagepath['userid'] = id
 
 
 
