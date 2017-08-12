@@ -1093,7 +1093,7 @@ module.exports = router => {
     });
     //service for fetching all documents
     router.get('/documents', function(req, res) {
-        if (checkToken(req)) {
+       const id = getUser(req)
             router.getImages(function(err, genres) {
                 if (err) {
                     throw err;
@@ -1101,12 +1101,12 @@ module.exports = router => {
                 }
                 res.json(genres);
             });
-        }
+        
     });
     //service for fetching particular user documents
     router.get('/documents/id', function(req, res) {
-        const userid = getUserId(req)
-        //const userid = "uploads/logo.jpg"
+        const id = getUser(req)
+        
         console.log(userid);
         router.getImageById(userid, function(err, genres) {
             if (err) {
