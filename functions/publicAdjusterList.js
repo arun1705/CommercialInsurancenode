@@ -8,7 +8,15 @@ exports.publicAdjusterList = (userid) => {
 
 
 
-        user.find({ "liscenceid": { "$exists": true } }, { "firstname": 1, "lastname": 1, "_id": 1 })
+        user.find({
+                "liscenceid": {
+                    "$exists": true
+                }
+            }, {
+                "firstname": 1,
+                "lastname": 1,
+                "_id": 1
+            })
             .then((users) => {
 
                 console.log(users)
@@ -20,23 +28,23 @@ exports.publicAdjusterList = (userid) => {
 
             })
 
-        .catch(err => {
+            .catch(err => {
 
-            if (err.code == 11000) {
+                if (err.code == 11000) {
 
-                return reject({
-                    status: 409,
-                    message: 'cant fetch !'
-                });
+                    return reject({
+                        status: 409,
+                        message: 'cant fetch !'
+                    });
 
-            } else {
-                console.log("error occurred" + err);
+                } else {
+                    console.log("error occurred" + err);
 
-                return reject({
-                    status: 500,
-                    message: 'Internal Server Error !'
-                });
-            }
-        })
+                    return reject({
+                        status: 500,
+                        message: 'Internal Server Error !'
+                    });
+                }
+            })
     })
 };
