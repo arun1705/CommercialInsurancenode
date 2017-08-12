@@ -1,10 +1,7 @@
-// This is just a sample script. Paste your real code (javascript or HTML) here.
-//here only routing is done and if the ro
+
 'use strict';
-/*
-const auth = require('basic-auth');
-const jwt = require('jsonwebtoken');
-*/
+
+
 var crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 var cors = require('cors');
@@ -38,6 +35,7 @@ const fetchClaimlist = require('./functions/fetchClaimlist');
 module.exports = router => {
 
     router.get('/', (req, res) => res.send("Welcome to commercial-insurance,please hit a service !"));
+    //register service for insured
     router.post('/registerUser', cors(), (req, res) => {
         console.log("entering register function in functions");
         const firstname = req.body.firstname;
@@ -75,7 +73,7 @@ module.exports = router => {
                 }));
         }
     });
-
+    //register service for publicadjsuter
     router.post('/registerPublicAdjuster', cors(), (req, res) => {
 
         const liscenceid = req.body.liscenceid;
@@ -114,7 +112,7 @@ module.exports = router => {
                 }));
         }
     });
-
+    //login service for all participants
     router.post('/login', cors(), (req, res) => {
 
         const email = req.body.email;
@@ -193,29 +191,7 @@ module.exports = router => {
         });
     });
 
-
-
-
-    router.get('/users/:id', cors(), (req, res) => {
-
-        if (checkToken(req)) {
-
-            profile.getProfile(req.params.id)
-
-                .then(result => res.json(result))
-
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
-
-        } else {
-
-            res.status(401).json({
-                message: 'Invalid Token !'
-            });
-        }
-    });
-
+    //service for change password
     router.put('/users/:id', cors(), (req, res) => {
 
         if (checkToken(req)) {
@@ -249,7 +225,7 @@ module.exports = router => {
             });
         }
     });
-
+    //service for reset password
     router.post('/users/:id/password', cors(), (req, res) => {
 
         const email = req.params.id;
@@ -284,7 +260,7 @@ module.exports = router => {
 
 
 
-
+    //service for notify claim by insured
     router.post('/notifyClaim', cors(), (req, res) => {
         const id = getUserId(req)
 
@@ -323,7 +299,7 @@ module.exports = router => {
 
 
 
-
+    //service for fetch all calims
     router.get('/claim/Claimlist', (req, res) => {
 
 
@@ -370,7 +346,7 @@ module.exports = router => {
                         Longest: longest,
                         Shortest: shortest
                     });
-                    //res.json(result)
+                    
                 })
 
                 .catch(err => res.status(err.status).json({
@@ -384,6 +360,8 @@ module.exports = router => {
             });
         }
     });
+    
+    //service for create claim by insured
     router.post('/createClaim', cors(), (req, res) => {
         if (checkToken(req)) {
 
@@ -427,7 +405,7 @@ module.exports = router => {
             });
         }
     });
-
+    //service for reject claim
     router.post('/rejectClaim', cors(), (req, res) => {
         const userid = getUserId(req)
         const claim_no = req.body.claimno;
@@ -463,12 +441,9 @@ module.exports = router => {
 
 
 
-
+    //service for examine claim
     router.post('/examineClaim', cors(), (req, res) => {
         const examinerid = getUserId(req)
-
-
-
         const claim_no = req.body.claimno
         const assesseddamagevalue = req.body.assesseddamagevalue;
         const assessedclaimvalue = req.body.assessedclaimvalue;
@@ -502,7 +477,7 @@ module.exports = router => {
 
     });
 
-
+    //service for negotiate claim
     router.post('/negotiateClaim', cors(), (req, res) => {
         const id = getUserId(req)
 
@@ -541,11 +516,11 @@ module.exports = router => {
 
     });
 
-
+    //service for approve claim
     router.post('/approveClaim', cors(), (req, res) => {
         const claimadjusterid = getUserId(req)
         const claim_no = req.body.claimno;
-        //   const claim_no =req.body.claimno;
+        
         var claimnoint = parseInt(claim_no);
 
 
@@ -576,12 +551,12 @@ module.exports = router => {
     });
 
 
-
+    //service for fetching approvedclaimvalue
     router.post('/approveClaimValue', cors(), (req, res) => {
 
         const claimadjusterid = getUserId(req)
         const claim_no = req.body.claimno;
-        //   const claim_no =req.body.claimno;
+       
         var claimnoint = parseInt(claim_no);
 
 
@@ -631,7 +606,7 @@ module.exports = router => {
     });
 
 
-
+    //service for settle claim
     router.post('/settleClaim', cors(), (req, res) => {
         const userid = getUserId(req)
         const claim_no = req.body.claimno;
@@ -664,7 +639,7 @@ module.exports = router => {
         }
 
     });
-
+    //service for fetching particular user calims
     router.get('/claim/UserClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -745,7 +720,7 @@ module.exports = router => {
     });
 
 
-
+    //service for fetching claims to be examined
     router.get('/claim/ExaminerClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -843,7 +818,7 @@ module.exports = router => {
         }
     });
 
-
+    //service for fetching claim to be negotiate
     router.get('/claim/ClaimAdjusterClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -947,7 +922,7 @@ module.exports = router => {
             });
         }
     });
-
+    //service for fetching claim to negitaite/agree by public adjuster
     router.get('/claim/PublicAdjusterClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -1053,27 +1028,28 @@ module.exports = router => {
         }
     });
 
-
+    //service for fetching all user documents
     router.getImages = function(callback, limit) {
 
         Image.find(callback).limit(limit);
     }
 
-
+    //service for fetching particular user document
     router.getImageById = function(userid, callback) {
 
-        // var query = { userid: userid };
+        
         Image.find({
             "userid": userid
         }, callback)
 
     }
+    //service for uploading image
     router.addImage = function(image, callback) {
         Image.create(image, callback);
     }
 
 
-    // To get more info about 'multer'.. you can go through https://www.npmjs.com/package/multer..
+    
     var storage = multer.diskStorage({
         destination: function(req, file, cb) {
             cb(null, 'uploads/')
@@ -1088,7 +1064,7 @@ module.exports = router => {
     });
 
 
-
+    //service for uploading documents
     router.post('/UploadDocs', upload.any(), function(req, res, next) {
         const id = getUser(req)
         res.send({
@@ -1115,8 +1091,8 @@ module.exports = router => {
 
 
     });
-
-    router.get('/images', function(req, res) {
+    //service for fetching all documents
+    router.get('/documents', function(req, res) {
         if (checkToken(req)) {
             router.getImages(function(err, genres) {
                 if (err) {
@@ -1127,8 +1103,8 @@ module.exports = router => {
             });
         }
     });
-
-    router.get('/images/id', function(req, res) {
+    //service for fetching particular user documents
+    router.get('/documents/id', function(req, res) {
         const userid = getUserId(req)
         //const userid = "uploads/logo.jpg"
         console.log(userid);
@@ -1141,7 +1117,7 @@ module.exports = router => {
         });
     });
 
-
+    //service for fetching all publicadjsuters
     router.get('/publicadjusterlist', cors(), (req, res) => {
         const userid = getUserId(req)
         console.log(userid);
@@ -1175,7 +1151,7 @@ module.exports = router => {
     });
 
 
-
+    //function for checking token and sending user id
     function getUserId(req) {
 
         const token = req.headers['x-access-token'];
@@ -1197,7 +1173,7 @@ module.exports = router => {
             return failed;
         }
     }
-
+    //function for checking token and sending user id
     function getUser(req) {
 
         const token = req.query.token;
@@ -1220,7 +1196,7 @@ module.exports = router => {
         }
     }
 
-
+    //function for checking token
     function checkToken(req) {
 
         const token = req.headers['x-access-token'];
@@ -1244,7 +1220,7 @@ module.exports = router => {
     }
 }
 
-
+//function for filtering status
 function filterstatus(status) {
 
     if (1 == 1) {
@@ -1292,7 +1268,7 @@ function filterstatus(status) {
 }
 
 
-
+//function for calculating count status
 function count(arr) {
     var statusname = [],
         statuscount = [],
