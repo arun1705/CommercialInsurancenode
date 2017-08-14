@@ -1,14 +1,18 @@
-
+// This is just a sample script. Paste your real code (javascript or HTML) here.
+//here only routing is done and if the ro
 'use strict';
-
 
 var crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 var cors = require('cors');
-var multer = require('multer');
+
 var mongoose = require('mongoose');
-var Image = require('./models/documents');
+var Photo = require('./models/documents');
+
 var path = require('path');
+var cloudinary = require('cloudinary').v2;
+var multipart = require('connect-multiparty');
+var multipartMiddleware = multipart();
 
 
 const register = require('./functions/register');
@@ -35,7 +39,6 @@ const fetchClaimlist = require('./functions/fetchClaimlist');
 module.exports = router => {
 
     router.get('/', (req, res) => res.send("Welcome to commercial-insurance,please hit a service !"));
-    //register service for insured
     router.post('/registerUser', cors(), (req, res) => {
         console.log("entering register function in functions");
         const firstname = req.body.firstname;
@@ -59,21 +62,21 @@ module.exports = router => {
 
             register.registerUser(firstname, lastname, email, phone, password)
 
-                .then(result => {
+            .then(result => {
 
-                    res.setHeader('Location', '/users/' + email);
-                    res.status(result.status).json({
-                        message: result.message,
-                        ind: true
-                    })
+                res.setHeader('Location', '/users/' + email);
+                res.status(result.status).json({
+                    message: result.message,
+                    ind: true
                 })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
-    //register service for publicadjsuter
+
     router.post('/registerPublicAdjuster', cors(), (req, res) => {
 
         const liscenceid = req.body.liscenceid;
@@ -98,21 +101,21 @@ module.exports = router => {
 
             registerpublicadjuster.registerPublicAdjuster(liscenceid, firstname, lastname, email, phone, password)
 
-                .then(result => {
+            .then(result => {
 
-                    res.setHeader('Location', '/users/' + email);
-                    res.status(result.status).json({
-                        message: result.message,
-                        ind: true
-                    })
+                res.setHeader('Location', '/users/' + email);
+                res.status(result.status).json({
+                    message: result.message,
+                    ind: true
                 })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
-    //login service for all participants
+
     router.post('/login', cors(), (req, res) => {
 
         const email = req.body.email;
@@ -129,55 +132,55 @@ module.exports = router => {
 
             login.loginUser(email, password)
 
-                .then(result => {
-                    if ('liscenceid' in result.users._doc) {
+            .then(result => {
+                if ('liscenceid' in result.users._doc) {
 
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "publicadjuster"
-                        });
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "publicadjuster"
+                    });
 
-                    } else if ('examinerid' in result.users._doc) {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "examiner"
-                        });
-                    } else if ('claimadjusterid' in result.users._doc) {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "claimadjuster"
-                        });
-                    } else {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "insured"
-                        });
-                    }
-
-
-                })
+                } else if ('examinerid' in result.users._doc) {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "examiner"
+                    });
+                } else if ('claimadjusterid' in result.users._doc) {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "claimadjuster"
+                    });
+                } else {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "insured"
+                    });
+                }
 
 
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
@@ -191,7 +194,29 @@ module.exports = router => {
         });
     });
 
-    //service for change password
+
+
+
+    router.get('/users/:id', cors(), (req, res) => {
+
+        if (checkToken(req)) {
+
+            profile.getProfile(req.params.id)
+
+            .then(result => res.json(result))
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+
+        } else {
+
+            res.status(401).json({
+                message: 'Invalid Token !'
+            });
+        }
+    });
+
     router.put('/users/:id', cors(), (req, res) => {
 
         if (checkToken(req)) {
@@ -209,13 +234,13 @@ module.exports = router => {
 
                 password.changePassword(req.params.id, oldPassword, newPassword)
 
-                    .then(result => res.status(result.status).json({
-                        message: result.message
-                    }))
+                .then(result => res.status(result.status).json({
+                    message: result.message
+                }))
 
-                    .catch(err => res.status(err.status).json({
-                        message: err.message
-                    }));
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
 
             }
         } else {
@@ -225,7 +250,7 @@ module.exports = router => {
             });
         }
     });
-    //service for reset password
+
     router.post('/users/:id/password', cors(), (req, res) => {
 
         const email = req.params.id;
@@ -236,31 +261,31 @@ module.exports = router => {
 
             password.resetPasswordInit(email)
 
-                .then(result => res.status(result.status).json({
-                    message: result.message
-                }))
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
             password.resetPasswordFinish(email, token, newPassword)
 
-                .then(result => res.status(result.status).json({
-                    message: result.message
-                }))
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
 
 
-    //service for notify claim by insured
+
     router.post('/notifyClaim', cors(), (req, res) => {
         const id = getUserId(req)
 
@@ -291,67 +316,67 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
 
 
-    //service for fetch all calims
+
     router.get('/claim/Claimlist', (req, res) => {
 
 
         if (checkToken(req)) {
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    var daysDifference = [];
-                    var claimDifference = [];
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+            .then(function(result) {
+                var daysDifference = [];
+                var claimDifference = [];
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
 
-                        if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+                    if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
 
-                            var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
-                            console.log("date1" + date1);
-                            var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
-                            console.log("date1" + date2);
-                            var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                            console.log("diffDays" + diffDays);
-                            daysDifference.push(diffDays)
-                            console.log("daysDifference" + daysDifference);
-                            var total = 0;
-                            for (let i = 0; i < daysDifference.length; i++) {
-                                total += daysDifference[i];
-                            }
-                            var averagedays = total / daysDifference.length;
-                            var longest = Math.max.apply(null, daysDifference)
-                            var shortest = Math.min.apply(null, daysDifference)
-
-
-
+                        var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
+                        console.log("date1" + date1);
+                        var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
+                        console.log("date1" + date2);
+                        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                        console.log("diffDays" + diffDays);
+                        daysDifference.push(diffDays)
+                        console.log("daysDifference" + daysDifference);
+                        var total = 0;
+                        for (let i = 0; i < daysDifference.length; i++) {
+                            total += daysDifference[i];
                         }
+                        var averagedays = total / daysDifference.length;
+                        var longest = Math.max.apply(null, daysDifference)
+                        var shortest = Math.min.apply(null, daysDifference)
+
+
 
                     }
-                    res.json({
-                        message: "user claims found",
-                        allClaims: result,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
-                    });
-                    
-                })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+                }
+                res.json({
+                    message: "user claims found",
+                    allClaims: result,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+                });
+                //res.json(result)
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -360,8 +385,6 @@ module.exports = router => {
             });
         }
     });
-    
-    //service for create claim by insured
     router.post('/createClaim', cors(), (req, res) => {
         if (checkToken(req)) {
 
@@ -394,9 +417,9 @@ module.exports = router => {
                         })
                     })
 
-                    .catch(err => res.status(err.status).json({
-                        message: err.message
-                    }));
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
             }
         } else {
 
@@ -405,7 +428,7 @@ module.exports = router => {
             });
         }
     });
-    //service for reject claim
+
     router.post('/rejectClaim', cors(), (req, res) => {
         const userid = getUserId(req)
         const claim_no = req.body.claimno;
@@ -432,18 +455,21 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
 
 
-    //service for examine claim
+
     router.post('/examineClaim', cors(), (req, res) => {
         const examinerid = getUserId(req)
+
+
+
         const claim_no = req.body.claimno
         const assesseddamagevalue = req.body.assesseddamagevalue;
         const assessedclaimvalue = req.body.assessedclaimvalue;
@@ -470,14 +496,14 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
-    //service for negotiate claim
+
     router.post('/negotiateClaim', cors(), (req, res) => {
         const id = getUserId(req)
 
@@ -509,18 +535,18 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
-    //service for approve claim
+
     router.post('/approveClaim', cors(), (req, res) => {
         const claimadjusterid = getUserId(req)
         const claim_no = req.body.claimno;
-        
+        //   const claim_no =req.body.claimno;
         var claimnoint = parseInt(claim_no);
 
 
@@ -543,20 +569,20 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
 
-    //service for fetching approvedclaimvalue
+
     router.post('/approveClaimValue', cors(), (req, res) => {
 
         const claimadjusterid = getUserId(req)
         const claim_no = req.body.claimno;
-       
+        //   const claim_no =req.body.claimno;
         var claimnoint = parseInt(claim_no);
 
 
@@ -564,13 +590,13 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
 
 
-                .then(function(result1) {
+            .then(function(result1) {
 
 
 
@@ -606,7 +632,7 @@ module.exports = router => {
     });
 
 
-    //service for settle claim
+
     router.post('/settleClaim', cors(), (req, res) => {
         const userid = getUserId(req)
         const claim_no = req.body.claimno;
@@ -633,13 +659,13 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
-    //service for fetching particular user calims
+
     router.get('/claim/UserClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -649,67 +675,67 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    console.log("result array data" + result.claimlist.body.claimlist);
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
 
-                    var filteredclaims = [];
-                    var status = [];
-                    var daysDifference = [];
-                    console.log("length of result array" + result.claimlist.body.claimlist.length);
+                var filteredclaims = [];
+                var status = [];
+                var daysDifference = [];
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
 
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        console.log("id" + id);
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (result.claimlist.body.claimlist[i].userid === id) {
                         console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                        if (result.claimlist.body.claimlist[i].userid === id) {
-                            console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                            filteredclaims.push(result.claimlist.body.claimlist[i]);
-                            status.push(result.claimlist.body.claimlist[i].status);
-                            var countstatus = count(status);
-                            console.log("countstatus" + countstatus);
-                            console.log("filteredclaims array " + filteredclaims);
-                            if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+                        filteredclaims.push(result.claimlist.body.claimlist[i]);
+                        status.push(result.claimlist.body.claimlist[i].status);
+                        var countstatus = count(status);
+                        console.log("countstatus" + countstatus);
+                        console.log("filteredclaims array " + filteredclaims);
+                        if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
 
-                                var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
-                                console.log("date1" + date1);
-                                var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
-                                console.log("date1" + date2);
-                                var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                                var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                                console.log("diffDays" + diffDays);
-                                daysDifference.push(diffDays)
-                                console.log("daysDifference" + daysDifference);
-                                var total = 0;
-                                for (let i = 0; i < daysDifference.length; i++) {
-                                    total += daysDifference[i];
-                                }
-                                var averagedays = total / daysDifference.length;
-                                var longest = Math.max.apply(null, daysDifference)
-                                var shortest = Math.min.apply(null, daysDifference)
-
-
-
+                            var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
+                            console.log("date1" + date1);
+                            var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
+                            console.log("date1" + date2);
+                            var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                            console.log("diffDays" + diffDays);
+                            daysDifference.push(diffDays)
+                            console.log("daysDifference" + daysDifference);
+                            var total = 0;
+                            for (let i = 0; i < daysDifference.length; i++) {
+                                total += daysDifference[i];
                             }
+                            var averagedays = total / daysDifference.length;
+                            var longest = Math.max.apply(null, daysDifference)
+                            var shortest = Math.min.apply(null, daysDifference)
+
 
 
                         }
-                    }
-                    return res.json({
-                        message: "user claims found",
-                        userClaims: filteredclaims,
-                        statuscount: countstatus,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
-                    });
-                })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+
+                    }
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+                });
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -720,7 +746,7 @@ module.exports = router => {
     });
 
 
-    //service for fetching claims to be examined
+
     router.get('/claim/ExaminerClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -730,85 +756,85 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    console.log("result array data" + result.claimlist.body.claimlist);
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
 
-                    var filteredclaims = [];
+                var filteredclaims = [];
 
-                    var status = [];
-                    var daysDifference = [];
-                    var countstatus
-                    console.log("length of result array" + result.claimlist.body.claimlist.length);
+                var status = [];
+                var daysDifference = [];
+                var countstatus
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
 
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        console.log("id" + id);
-                        console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                        if (id === id) {
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (id === id) {
 
-                            if (result.claimlist.body.claimlist[i].status == "Submitted") {
-                                filteredclaims.push(result.claimlist.body.claimlist[i]);
-                                status.push(result.claimlist.body.claimlist[i].status);
-                                countstatus = count(status);
+                        if (result.claimlist.body.claimlist[i].status == "Submitted") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
 
-                                console.log("countstatus" + countstatus);
-                                console.log("filteredclaims array " + filteredclaims);
-                                for (let i = 0; i < filteredclaims.length; i++) {
-                                    if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+                            console.log("countstatus" + countstatus);
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
 
-                                        var date1 = new Date(filteredclaims[i].claimnotifieddate);
-                                        console.log("date1" + date1);
-                                        var date2 = new Date(filteredclaims[i].claimsettleddate);
-                                        console.log("date1" + date2);
-                                        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                                        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                                        console.log("diffDays" + diffDays);
-                                        daysDifference.push(diffDays)
-                                        console.log("daysDifference" + daysDifference);
-                                        var total = 0;
-                                        for (let i = 0; i < daysDifference.length; i++) {
-                                            total += daysDifference[i];
-                                        }
-                                        var averagedays = total / daysDifference.length;
-                                        var longest = Math.max.apply(null, daysDifference)
-                                        var shortest = Math.min.apply(null, daysDifference)
-
-
-
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
                                     }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
                                 }
-
-
                             }
-                            if (result.claimlist.body.claimlist[i].status == "Notified") {
-                                status.push(result.claimlist.body.claimlist[i].status);
-                                countstatus = count(status);
-                            }
-                            if (result.claimlist.body.claimlist[i].examinerid === id) {
-                                status.push(result.claimlist.body.claimlist[i].status);
-                                countstatus = count(status);
 
 
-                            }
+                        }
+                        if (result.claimlist.body.claimlist[i].status == "Notified") {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
+                        if (result.claimlist.body.claimlist[i].examinerid === id) {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+
+
                         }
                     }
-                    return res.json({
-                        message: "user claims found",
-                        userClaims: filteredclaims,
-                        statuscount: countstatus,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
 
-                    });
-                })
+                });
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -818,7 +844,7 @@ module.exports = router => {
         }
     });
 
-    //service for fetching claim to be negotiate
+
     router.get('/claim/ClaimAdjusterClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -828,92 +854,92 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    console.log("result array data" + result.claimlist.body.claimlist);
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
 
-                    var filteredclaims = [];
+                var filteredclaims = [];
 
-                    var status = [];
-                    var daysDifference = [];
-                    var countstatus
-                    console.log("length of result array" + result.claimlist.body.claimlist.length);
+                var status = [];
+                var daysDifference = [];
+                var countstatus
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
 
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        console.log("id" + id);
-                        console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                        if (id === id) {
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (id === id) {
 
-                            if (result.claimlist.body.claimlist[i].status == "Examined" || result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
-                                filteredclaims.push(result.claimlist.body.claimlist[i]);
+                        if (result.claimlist.body.claimlist[i].status == "Examined" || result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
 
-                                if (result.claimlist.body.claimlist[i].status == "Examined") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                } else if (result.claimlist.body.claimlist[i].status == "Validated") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                } else if (result.claimlist.body.claimlist[i].status == "Approved") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                } else if (result.claimlist.body.claimlist[i].status == "Settled") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                }
-
-                                countstatus = count(status);
-
-                                console.log("countstatus" + countstatus);
-                                console.log("filteredclaims array " + filteredclaims);
-                                for (let i = 0; i < filteredclaims.length; i++) {
-                                    if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
-
-                                        var date1 = new Date(filteredclaims[i].claimnotifieddate);
-                                        console.log("date1" + date1);
-                                        var date2 = new Date(filteredclaims[i].claimsettleddate);
-                                        console.log("date1" + date2);
-                                        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                                        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                                        console.log("diffDays" + diffDays);
-                                        daysDifference.push(diffDays)
-                                        console.log("daysDifference" + daysDifference);
-                                        var total = 0;
-                                        for (let i = 0; i < daysDifference.length; i++) {
-                                            total += daysDifference[i];
-                                        }
-                                        var averagedays = total / daysDifference.length;
-                                        var longest = Math.max.apply(null, daysDifference)
-                                        var shortest = Math.min.apply(null, daysDifference)
-
-
-
-                                    }
-                                }
-
-
+                            if (result.claimlist.body.claimlist[i].status == "Examined") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Validated") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Approved") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Settled") {
+                                status.push(result.claimlist.body.claimlist[i].status);
                             }
 
-                            if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted") {
-                                status.push(result.claimlist.body.claimlist[i].status);
-                                countstatus = count(status);
+                            countstatus = count(status);
+
+                            console.log("countstatus" + countstatus);
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
+                                    }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                                }
                             }
 
 
                         }
+
+                        if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted") {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
+
+
                     }
-                    return res.json({
-                        message: "user claims found",
-                        userClaims: filteredclaims,
-                        statuscount: countstatus,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
 
-                    });
-                })
+                });
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -922,7 +948,7 @@ module.exports = router => {
             });
         }
     });
-    //service for fetching claim to negitaite/agree by public adjuster
+
     router.get('/claim/PublicAdjusterClaims', (req, res) => {
 
         const id = getUserId(req)
@@ -932,93 +958,93 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    console.log("result array data" + result.claimlist.body.claimlist);
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
 
-                    var filteredclaims = [];
+                var filteredclaims = [];
 
-                    var status = [];
-                    var status1 = [];
-                    var daysDifference = [];
-                    var countstatus
-                    var countstatus1
-                    console.log("length of result array" + result.claimlist.body.claimlist.length);
+                var status = [];
+                var status1 = [];
+                var daysDifference = [];
+                var countstatus
+                var countstatus1
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
 
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        console.log("id" + id);
-                        console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                        if (result.claimlist.body.claimlist[i].publicadjusterid === id) {
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (result.claimlist.body.claimlist[i].publicadjusterid === id) {
 
-                            if (result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
-                                filteredclaims.push(result.claimlist.body.claimlist[i]);
-                                if (result.claimlist.body.claimlist[i].status == "Validated") {
-                                    status1.push(result.claimlist.body.claimlist[i].status);
-                                    countstatus1 = count(status1);
-                                } else if (result.claimlist.body.claimlist[i].status == "Approved") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                } else if (result.claimlist.body.claimlist[i].status == "Settled") {
-                                    status.push(result.claimlist.body.claimlist[i].status);
-                                }
-
-                                countstatus = count(status);
-
-
-                                console.log("filteredclaims array " + filteredclaims);
-                                for (let i = 0; i < filteredclaims.length; i++) {
-                                    if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
-
-                                        var date1 = new Date(filteredclaims[i].claimnotifieddate);
-                                        console.log("date1" + date1);
-                                        var date2 = new Date(filteredclaims[i].claimsettleddate);
-                                        console.log("date1" + date2);
-                                        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                                        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                                        console.log("diffDays" + diffDays);
-                                        daysDifference.push(diffDays)
-                                        console.log("daysDifference" + daysDifference);
-                                        var total = 0;
-                                        for (let i = 0; i < daysDifference.length; i++) {
-                                            total += daysDifference[i];
-                                        }
-                                        var averagedays = total / daysDifference.length;
-                                        var longest = Math.max.apply(null, daysDifference)
-                                        var shortest = Math.min.apply(null, daysDifference)
-
-
-
-                                    }
-                                }
-
-
-                            }
-
-                            if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted" || result.claimlist.body.claimlist[i].status == "Examined") {
+                        if (result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            if (result.claimlist.body.claimlist[i].status == "Validated") {
+                                status1.push(result.claimlist.body.claimlist[i].status);
+                                countstatus1 = count(status1);
+                            } else if (result.claimlist.body.claimlist[i].status == "Approved") {
                                 status.push(result.claimlist.body.claimlist[i].status);
-                                countstatus = count(status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Settled") {
+                                status.push(result.claimlist.body.claimlist[i].status);
                             }
+
+                            countstatus = count(status);
+
+
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
+                                    }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                                }
+                            }
+
+
+                        }
+
+                        if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted" || result.claimlist.body.claimlist[i].status == "Examined") {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
                         }
                     }
+                }
 
-                    return res.json({
-                        message: "user claims found",
-                        userClaims: filteredclaims,
-                        statuscount: countstatus,
-                        statuscount1: countstatus1,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    statuscount1: countstatus1,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
 
-                    });
+                });
 
-                })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -1028,96 +1054,47 @@ module.exports = router => {
         }
     });
 
-    //service for fetching all user documents
-    router.getImages = function(callback, limit) {
+    cloudinary.config({
+        cloud_name: 'diyzkcsmp',
+        api_key: '188595956976777',
+        api_secret: 'F7ajPhx0uHdohqfbjq2ykBZcMiw'
 
-        Image.find(callback).limit(limit);
-    }
-
-    //service for fetching particular user document
-    router.getImageById = function(userid, callback) {
-
-        
-        Image.find({
-            "userid": userid
-        }, callback)
-
-    }
-    //service for uploading image
-    router.addImage = function(image, callback) {
-        Image.create(image, callback);
-    }
-
-
-    
-    var storage = multer.diskStorage({
-        destination: function(req, file, cb) {
-            cb(null, 'uploads/')
-        },
-        filename: function(req, file, cb) {
-            cb(null, file.originalname);
-        }
     });
 
-    var upload = multer({
-        storage: storage
-    });
-
-
-    //service for uploading documents
-    router.post('/UploadDocs', upload.any(), function(req, res, next) {
+    router.post('/UploadDocs', multipartMiddleware, function(req, res, next) {
         const id = getUser(req)
-        res.send({
-            "files": req.files,
-            message: "files uploaded succesfully"
-        });
-
-        var path = req.files[0].path;
-        var imageName = req.files[0].originalname;
+        var photo = new Photo(req.body);
+        console.log("req.files.image" + JSON.stringify(req.files));
+        var imageFile = req.files.file.path;
 
 
-        var imagepath = {};
-        imagepath['path'] = path;
-        imagepath['originalname'] = imageName;
-        imagepath['userid'] = id
+        cloudinary.uploader.upload(imageFile, {
+                tags: 'express_sample'
+            })
+            .then(function(image) {
+                console.log('** file uploaded to Cloudinary service');
+                console.dir(image);
+                photo.url = image.url;
+                photo.userid = id;
+                // Save photo with image metadata
+                return photo.save();
+            })
+            .then(function(photo) {
 
+                res.send({
+                    url: photo._doc.url,
+                    message: "files uploaded succesfully"
+                });
+            })
+            .finally(function() {
 
-
-        router.addImage(imagepath, function(err) {
-
-        });
-
-
-
-
-    });
-    //service for fetching all documents
-    router.get('/documents', function(req, res) {
-       const id = getUser(req)
-            router.getImages(function(err, genres) {
-                if (err) {
-                    throw err;
-
-                }
-                res.json(genres);
+                res.render('photos/create_through_server', {
+                    photo: photo,
+                    upload: photo.image
+                });
             });
-        
-    });
-    //service for fetching particular user documents
-    router.get('/documents/id', function(req, res) {
-        const id = getUser(req)
-        
-        console.log(userid);
-        router.getImageById(userid, function(err, genres) {
-            if (err) {
-                throw err;
-            }
-
-            res.send(genres)
-        });
     });
 
-    //service for fetching all publicadjsuters
     router.get('/publicadjusterlist', cors(), (req, res) => {
         const userid = getUserId(req)
         console.log(userid);
@@ -1135,23 +1112,23 @@ module.exports = router => {
 
             publicAdjusterList.publicAdjusterList(userid)
 
-                .then(function(result) {
-                    console.log(result)
-                    res.status(result.status).json({
-                        status: result.status,
-                        message: result.usr
-                    })
+            .then(function(result) {
+                console.log(result)
+                res.status(result.status).json({
+                    status: result.status,
+                    message: result.usr
                 })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
 
-    //function for checking token and sending user id
+
     function getUserId(req) {
 
         const token = req.headers['x-access-token'];
@@ -1173,7 +1150,7 @@ module.exports = router => {
             return failed;
         }
     }
-    //function for checking token and sending user id
+
     function getUser(req) {
 
         const token = req.query.token;
@@ -1196,7 +1173,7 @@ module.exports = router => {
         }
     }
 
-    //function for checking token
+
     function checkToken(req) {
 
         const token = req.headers['x-access-token'];
@@ -1220,43 +1197,43 @@ module.exports = router => {
     }
 }
 
-//function for filtering status
+
 function filterstatus(status) {
 
     if (1 == 1) {
 
 
         fetchClaimlist.fetch_Claim_list({
-                "user": "risabh",
-                "getclaims": "getclaims"
-            })
+            "user": "risabh",
+            "getclaims": "getclaims"
+        })
 
-            .then(function(result) {
-
-
-                console.log("result" + result.claimlist.body.claimlist)
-                var statusfilter = [];
+        .then(function(result) {
 
 
-                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                    console.log("status" + status);
-                    console.log("statusledger" + result.claimlist.body.claimlist[i].status);
-                    if (result.claimlist.body.claimlist[i].status === status) {
-
-                        statusfilter.push(result.claimlist.body.claimlist[i].status);
-                        console.log("statusfilter" + statusfilter);
+            console.log("result" + result.claimlist.body.claimlist)
+            var statusfilter = [];
 
 
+            for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                console.log("status" + status);
+                console.log("statusledger" + result.claimlist.body.claimlist[i].status);
+                if (result.claimlist.body.claimlist[i].status === status) {
+
+                    statusfilter.push(result.claimlist.body.claimlist[i].status);
+                    console.log("statusfilter" + statusfilter);
 
 
-                    }
+
+
                 }
-                return statusfilter;
-            })
+            }
+            return statusfilter;
+        })
 
-            .catch(err => res.status(err.status).json({
-                message: err.message
-            }));
+        .catch(err => res.status(err.status).json({
+            message: err.message
+        }));
 
     } else {
         return res.status(401).json({
@@ -1268,7 +1245,7 @@ function filterstatus(status) {
 }
 
 
-//function for calculating count status
+
 function count(arr) {
     var statusname = [],
         statuscount = [],
