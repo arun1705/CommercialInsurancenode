@@ -1094,6 +1094,26 @@ module.exports = router => {
                 });
             });
     });
+    
+    router.get('/images/id', cors(), (req, res) => {
+        const id = getUser(req)
+        Photo.find({ "userid": id })
+            .then((images) => {
+                var image = [];
+                for (let i = 0; i < images.length; i++) {
+                    image.push(images[i]._doc)
+
+                }
+
+                res.send({
+
+                    images: image,
+                    message: "image fetched succesfully"
+                });
+            })
+
+
+    });
 
     router.get('/publicadjusterlist', cors(), (req, res) => {
         const userid = getUserId(req)
