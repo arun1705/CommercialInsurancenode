@@ -1096,7 +1096,7 @@ module.exports = router => {
     });
     
     router.get('/images/id', cors(), (req, res) => {
-        const id = getUser(req)
+        const id = req.query.userid
         Photo.find({ "userid": id })
             .then((images) => {
                 var image = [];
